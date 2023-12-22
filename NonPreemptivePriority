@@ -1,0 +1,102 @@
+package Debug.Entity.NonPreemptivePriority;
+import org.jetbrains.annotations.NotNull;
+import java.util.*;
+class  Process implements Comparable<Process>{
+    static int currentNumberOfProcess;
+    static int currentTimeForSort;
+    static int currentTime;
+    static float avgWaitingTime;
+    static float avgTurnaroundTime;
+    static int sortPriority;
+    String name;
+    int arrivalTime;
+    int priorityTime;
+    int burstTime;
+    int waitingTime;
+    int turnaroundTime;
+    int completionTime;
+    public Process(int arrivalTime, int priorityTime, int burstTime) {
+        this.arrivalTime = arrivalTime;
+        this.priorityTime = priorityTime;
+        this.burstTime = burstTime;
+        this.name = "P" + ++currentNumberOfProcess;
+    }
+    @Override
+    public String toString() {
+        return name +
+                ", arrivalTime=" + arrivalTime +
+                ", priorityTime=" + priorityTime +
+                ", burstTime=" + burstTime +
+                ", waitingTime=" + waitingTime +
+                ", turnaroundTime=" + turnaroundTime;
+    }
+    @Override
+    public int compareTo(@NotNull Process o) {
+        if (sortPriority == 0){
+            if (this.arrivalTime - o.arrivalTime == 0){
+                return this.priorityTime - o.priorityTime;
+            } else{
+                return this.arrivalTime - o.arrivalTime;
+            }
+        } else {
+            return this.priorityTime - o.priorityTime;
+        }
+    }
+}
+public class NonPreemptivePriority {
+    public static void run(Scanner in) {
+        System.out.println("Enter the number of processes : ");
+        int size = in.nextInt();
+        Process[] processes = new Process[size];
+        input(processes , size , in);
+        sort(processes , size);
+        for (int i = 0; i < size; i++) {
+            if (processes[i].arrivalTime > Process.currentTime){
+                Process.currentTime = 0;
+            }
+            Process.currentTime += processes[i].burstTime;
+            processes[i].completionTime = Process.currentTime;
+            processes[i].turnaroundTime = Math.max(processes[i].completionTime - processes[i].arrivalTime ,processes[i].burstTime);
+            processes[i].waitingTime = Math.max(processes[i].turnaroundTime - processes[i].burstTime , 0 );
+            Process.avgWaitingTime += (processes[i].waitingTime / (float) size);
+            Process.avgTurnaroundTime += (processes[i].turnaroundTime / (float) size);
+        }
+        print(processes);
+    }
+    public static void input(Process[] processes , int size , Scanner in){
+        for (int i = 0; i < size ; i++) {
+            System.out.println("Enter arrival time for P" + (i + 1));
+            int at = in.nextInt();
+            System.out.println("Enter priority for P" + (i + 1));
+            int pt = in.nextInt();
+            System.out.println("Enter burst time for P" + (i + 1));
+            int bt = in.nextInt();
+            processes[i] = new Process(at , pt , bt);
+        }
+    }
+    public static void print(Process[] processes){
+        for (Process process : processes){
+            System.out.println(process);
+        }
+        System.out.println("Avg waiting time : " + Process.avgWaitingTime);
+        System.out.println("Avg turnaround time : " + Process.avgTurnaroundTime);
+    }
+    public static void sort(Process[] processes , int size){
+        Arrays.sort(processes);
+        Process.sortPriority = 1;
+        Process.currentTimeForSort =  processes[0].burstTime;
+        for (int i = 1; i < size ; i++) {
+            sortRange(processes , i , size);
+            Process.currentTimeForSort += processes[i].burstTime;
+        }
+    }
+    public static void sortRange(Process[] processes , int i ,int size){
+        int lastValidProcess = i;
+        for (int j = i; j < size ; j++) {
+            if (processes[j].arrivalTime <= Process.currentTimeForSort){
+                lastValidProcess = j;
+            } else break;
+        }
+        Arrays.sort(processes , i , lastValidProcess+1); //[i , j[
+    }
+}
